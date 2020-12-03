@@ -1,30 +1,34 @@
 
 
 library(shiny)
+library(shinydashboard)
 library(kableExtra)
 
 
 
-ui <- fluidPage(
-
-  titlePanel("Iwi cultural well-being from Te Kupenga"),
+ui <- dashboardPage(
+  skin = "green",
+  dashboardHeader(title = "Iwi cultural well-being from Te Kupenga",
+                  titleWidth = 450),
   
-  sidebarLayout(
-    sidebarPanel(
+  dashboardSidebar(
       uiOutput("measure_ui"),
       uiOutput("region_ui"),
       uiOutput("iwi_ui")
-    ),
-    mainPanel(    
-      tabsetPanel(
-       tabPanel("Graph", plotOutput("bar_plot")),
+  ),
+  dashboardBody(
+      
+  tabBox(
+       tabPanel("Graph", plotOutput("bar_plot",  height = "600px")),
        tabPanel("Table",  
-                h5(htmlOutput("table_title")),
-                htmlOutput("kable_output"))
+                h3(htmlOutput("table_title")),
+                htmlOutput("kable_output")),
+    width = 10,
+    height = 700
       )
     )
   )
-)
+
 
 server = function(input, output, session) {
   
@@ -78,7 +82,7 @@ server = function(input, output, session) {
   output$bar_plot <- renderPlot({
     
     g <-
-      ggplot(data_final(), aes(x = Categories, y = Percent, fill = Categories)) +
+      ggplot(req(data_final()), aes(x = Categories, y = Percent, fill = Categories)) +
       geom_col() +
       theme_bw() +
       scale_y_continuous(labels = scales::percent) +
@@ -86,7 +90,8 @@ server = function(input, output, session) {
       scale_x_discrete(labels = function(x) str_wrap(x, width =10)) +
       labs(title = unique(data_final()$Question),
            subtitle = unique(data_final()$Iwi),
-           caption = "Source: Statistics New Zealand")
+           caption = "Source: Statistics New Zealand") +
+      theme(text = element_text(size = 15))
     
     g
     
@@ -105,12 +110,8 @@ server = function(input, output, session) {
       select(Categories, Percent) %>%
       mutate(Percent = scales::percent(Percent, accuracy = 0.1)) %>% 
       kable() %>%
-      kable_styling("hover", full_width = F)
+      kable_styling("hover", full_width = FALSE, font_size = 15)
   })
-
-
 }
-
-
 
 shiny::shinyApp(ui, server)
